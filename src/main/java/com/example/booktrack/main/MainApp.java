@@ -3,7 +3,6 @@ package com.example.booktrack.main;
 import java.util.Optional;
 import java.util.Scanner;
 
-import com.example.booktrack.DTO.DadosAutorDTO;
 import com.example.booktrack.DTO.DadosLivroDTO;
 import com.example.booktrack.model.Autor;
 import com.example.booktrack.model.DadosLivro;
@@ -11,6 +10,8 @@ import com.example.booktrack.model.Livro;
 import com.example.booktrack.repository.LivroRepository;
 import com.example.booktrack.service.ConsomeApi;
 import com.example.booktrack.service.ConverteDados;
+
+import jakarta.transaction.Transactional;
 
 public class MainApp {
     private LivroRepository repository;
@@ -53,19 +54,33 @@ public class MainApp {
     }
 
     private void listarLivrosPorIdioma() {
+        System.out.println("Insira o idioma para realizar a busca:");
+        System.out.println("es - espanhol");
+        System.out.println("en - inglês");
+        System.out.println("pt - português");
+        System.out.println("fr - francês");
+        String idioma = scan.nextLine();
 
+        repository.retornarLivrosPorLingua(idioma).forEach(System.out::println);
     }
 
     private void listarAutoresVivos() {
-
+        System.out.println("Insira o ano:");
+        int ano = scan.nextInt();
+        scan.nextLine();
+        repository.retornarAutoresVivos(ano).forEach(System.out::println);
     }
 
+    @Transactional
     private void listarAutores() {
-
+        repository.retornarAutores().forEach(a -> {
+        System.out.println("Autor: " + a.getNome());
+        a.getLivros().forEach(l -> System.out.println("  Livro: " + l.getTitulo()));
+    });
     }
 
     private void listarLivros() {
-
+        repository.findAll().forEach(System.out::println);
     }
 
     private void buscarLivroPorTitulo() {
@@ -85,15 +100,8 @@ public class MainApp {
             System.out.println("Idioma: " + livroEncontrado.idioma());
             System.out.println("Número de downloads: " + livroEncontrado.downloads());
 
-            DadosAutorDTO dto = livroEncontrado.autor().get(0);
-            System.out.println("Autor DTO - nome: " + dto.nome());
-            System.out.println("Autor DTO - nascimento: " + dto.nascimento());
-            System.out.println("Autor DTO - morte: " + dto.morte());
-
-            Autor autor = new Autor(dto);
-            System.out.println("Autor entity - nome: " + autor.getNome());
+            Autor autor = new Autor(livroEncontrado.autor().get(0));
             Livro livro = new Livro(livroEncontrado);
-
             livro.setAutor(autor);
 
             repository.save(livro);

@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.transaction.Transactional;
 
 @Entity
 @Table(name = "livros")
@@ -59,5 +60,10 @@ public class Livro {
 
     public void setLingua(String lingua) {
         this.lingua = lingua;
-    }    
+    }
+
+    @Override
+    public String toString() {
+        return "Livro [id=" + id + ", titulo=" + titulo + ", lingua=" + lingua + ", autor=" + autor.getNome() + "]";
+    }
 }

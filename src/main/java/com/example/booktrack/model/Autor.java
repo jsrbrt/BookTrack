@@ -2,8 +2,9 @@
 
     import java.util.ArrayList;
     import java.util.List;
+import java.util.stream.Collectors;
 
-    import com.example.booktrack.DTO.DadosAutorDTO;
+import com.example.booktrack.DTO.DadosAutorDTO;
 
     import jakarta.persistence.CascadeType;
     import jakarta.persistence.Entity;
@@ -12,6 +13,7 @@
     import jakarta.persistence.Id;
     import jakarta.persistence.OneToMany;
     import jakarta.persistence.Table;
+    import jakarta.transaction.Transactional;
 
     @Entity
     @Table(name = "autores")
@@ -36,6 +38,14 @@
         public String getNome() {
             return nome;
         }
+        public List<Livro> getLivros() {
+            return livros;
+        }
+
+        public void setLivros(List<Livro> livros) {
+            this.livros = livros;
+        }
+
         public void setNome(String nome) {
             this.nome = nome;
         }
@@ -50,5 +60,16 @@
         }
         public void setMorte(int morte) {
             this.morte = morte;
+        }
+
+        @Override
+        public String toString() {
+            String titulos = livros != null
+            ? livros.stream()
+                    .map(Livro::getTitulo)
+                    .collect(Collectors.joining(", "))
+            : "";
+            return "Autor [id=" + id + ", nome=" + nome + ", nascimento=" + nascimento + ", morte=" + morte
+                    + ", livros=" + titulos + "]";
         }
     }
