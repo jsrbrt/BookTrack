@@ -1,5 +1,6 @@
 package com.example.booktrack.main;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 
@@ -61,31 +62,48 @@ public class MainApp {
         System.out.println("fr - francês");
         String idioma = scan.nextLine();
 
-        repository.retornarLivrosPorLingua(idioma).forEach(System.out::println);
+        Optional<List<Livro>> livrosPorIdioma = repository.retornarLivrosPorLingua(idioma);
+        if (livrosPorIdioma.isPresent()) {
+            livrosPorIdioma.get().forEach(l -> printarLivro(l));
+        } else{
+            System.out.println("Não existem livros com esse idioma no banco de dados.");
+        }
     }
 
     private void listarAutoresVivos() {
         System.out.println("Insira o ano:");
         int ano = scan.nextInt();
         scan.nextLine();
-        repository.retornarAutoresVivos(ano).forEach(System.out::println);
+        Optional<List<Autor>> autoresVivos = repository.retornarAutoresVivos(ano);
+
+        if (autoresVivos.isPresent()) {
+            autoresVivos.get().forEach(a -> printarAutor(a));
+        } else {
+            System.out.println("Nenhum autor vivo neste ano no banco de dados");
+        }
     }
 
     @Transactional
     private void listarAutores() {
-        repository.retornarAutores().forEach(a -> {
-        System.out.println("Autor: " + a.getNome());
-        a.getLivros().forEach(l -> System.out.println("  Livro: " + l.getTitulo()));
-    });
+        repository.retornarAutores().forEach(a -> printarAutor(a));
     }
 
     private void listarLivros() {
-        repository.findAll().forEach(System.out::println);
+        repository.findAll().forEach(l -> printarLivro(l));
     }
 
     private void buscarLivroPorTitulo() {
         System.out.println("Digite o nome do livro:");
         String nomeLivro = scan.nextLine(); 
+
+        Optional<Livro> livroExistente = repository.findByTituloContainingIgnoreCase(nomeLivro);
+
+        if (livroExistente.isPresent()) {
+            System.out.println("Esse livro já está no banco!");
+            printarLivro(livroExistente.get());
+            return;
+        }
+
         var json = consumo.obterDados(endereco + "?search=" + nomeLivro.replace(" ", "+"));
         DadosLivro dados = conversor.obterDados(json, DadosLivro.class);
 
@@ -93,18 +111,36 @@ public class MainApp {
 
         if (dadosLivro.isPresent()) {
             DadosLivroDTO livroEncontrado = dadosLivro.get();
-
-            System.out.println("---- Livro ----");
-            System.out.println("Título: " + livroEncontrado.titulo());
-            livroEncontrado.autor().forEach(a -> System.out.println("Autor: " + a.nome()));
-            System.out.println("Idioma: " + livroEncontrado.idioma());
-            System.out.println("Número de downloads: " + livroEncontrado.downloads());
-
-            Autor autor = new Autor(livroEncontrado.autor().get(0));
             Livro livro = new Livro(livroEncontrado);
-            livro.setAutor(autor);
 
+            Optional<Autor> autorExistente = repository.retornarAutorByNome(livroEncontrado.autor().get(0).nome());
+
+            if (autorExistente.isPresent()) {
+                livro.setAutor(autorExistente.get());
+            } else {
+                livro.setAutor(new Autor(livroEncontrado.autor().get(0)));
+            }
             repository.save(livro);
+            printarLivro(livro);
         }
+    }
+    
+    private void printarAutor(Autor autor){
+        System.out.println("---- Autor ----");
+        System.out.println("Autor: " + autor.getNome());
+        System.out.println("Ano de nascimento: " + autor.getNascimento());
+        System.out.println("Ano de morte: " + autor.getMorte());
+        System.out.print("Livro(s): ");
+        autor.getLivros().forEach(l -> System.out.print(l.getTitulo() + ", "));
+        System.out.println("\n---------------");
+    }
+
+    private void printarLivro(Livro livro){
+        System.out.println("---- Livro ----");
+        System.out.println("Título: " + livro.getTitulo());
+        System.out.println("Autor: " + livro.getAutor().getNome());
+        System.out.println("Idioma: " + livro.getLingua());
+        System.out.println("Número de downloads: " + livro.getNumDownloads());
+        System.out.println("---------------");
     }
 }

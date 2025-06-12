@@ -8,7 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.transaction.Transactional;
 
 @Entity
 @Table(name = "livros")
@@ -17,6 +16,7 @@ public class Livro {
     private Long id;
     private String titulo;
     private String lingua;
+    private int numDownloads;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "autor_id")
@@ -28,10 +28,19 @@ public class Livro {
         this.id = dadosLivroDTO.id();
         this.titulo = dadosLivroDTO.titulo();
         this.lingua = String.join(", ", dadosLivroDTO.idioma());
+        this.numDownloads = dadosLivroDTO.downloads();
     }
     
     public Autor getAutor() {
         return autor;
+    }
+
+    public int getNumDownloads() {
+        return numDownloads;
+    }
+
+    public void setNumDownloads(int numDownloads) {
+        this.numDownloads = numDownloads;
     }
 
     public void setAutor(Autor autor) {
